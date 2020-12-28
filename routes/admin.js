@@ -11,9 +11,7 @@ const products = [];
 router.get('/add-product', (req, res, next) => {
   res.render('add-product', {
     docTitle: "Add product",
-    activeProduct: true,
-    formCSS: true,
-    productCSS: true,
+    path: "/admin/add-product",
   });
 });
 
