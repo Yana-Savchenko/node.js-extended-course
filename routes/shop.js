@@ -2,7 +2,7 @@ const path = require('path');
 
 const express = require('express');
 
-const { getProducts, getIndex, getCart, getCheckout, getOrders, getProduct } = require('../controllers/shop');
+const { getProducts, getIndex, getCart, getCheckout, getOrders, getProduct, postCart } = require('../controllers/shop');
 
 const router = express.Router();
 
@@ -17,7 +17,7 @@ router.get('/products/:id', getProduct);
 
 router.get('/cart', getCart);
 
-// router.post('/cart', addToCart);
+router.post('/cart', postCart);
 
 router.get('/orders', getOrders);
 
