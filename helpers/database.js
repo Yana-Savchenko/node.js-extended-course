@@ -1,5 +1,27 @@
-const Sequelize = require('sequelize');
+const mongodb = require('mongodb');
 
-const sequelize = new Sequelize('node_course', 'user', '1234', { dialect: 'mysql', host: 'localhost' });
+const MongoClient = mongodb.MongoClient;
 
-module.exports = sequelize;
+let _db = null;
+
+const mongoConnect = cb => {
+  MongoClient.connect('mongodb+srv://root:12345@cluster0.pyavk.mongodb.net/shop?retryWrites=true&w=majority', { useUnifiedTopology: true })
+    .then(client => {
+      console.log('Connected!');
+      _db = client.db();
+      cb();
+    })
+    .catch(err => {
+      console.log(err);
+      throw err;
+    })
+}
+
+const getDb = () => {
+  if (_db) {
+    return _db;
+  }
+  throw 'No database found!';
+}
+exports.mongoConnect = mongoConnect;
+exports.getDb = getDb;
