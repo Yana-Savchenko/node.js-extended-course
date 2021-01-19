@@ -22,6 +22,18 @@ class User {
       })
   }
 
+  static findById(userId) {
+    const db = getDb();
+    return db.collection('users')
+      .findOne({ _id: ObjectId(userId) })
+      .then(user => {
+        return user;
+      })
+      .catch(err => {
+        console.log(err);
+      })
+  }
+
   getCart() {
     const db = getDb();
     const productIds = this.cart.items.map(item => item.productId);
@@ -79,16 +91,34 @@ class User {
     );
   }
 
-  static findById(userId) {
+  addOrder() {
     const db = getDb();
-    return db.collection('users')
-      .findOne({ _id: ObjectId(userId) })
-      .then(user => {
-        return user;
+    return this.getCart()
+      .then(products => {
+        const order = {
+          items: products,
+          user: {
+            _id: new ObjectId(this._id),
+            name: this.email
+          }
+        }
+        return db.collection('orders').insertOne(order)
+      })
+      .then(() => {
+        this.cart = { items: [] };
+        return db.collection('users').updateOne(
+          { _id: new ObjectId(this._id) },
+          { $set: { cart: { items: [] } } }
+        );
       })
       .catch(err => {
         console.log(err);
       })
+  }
+
+  getOrders() {
+    const db = getDb();
+    return db.collection('orders').find({ 'user._id': new ObjectId(this._id) }).toArray();
   }
 }
 
