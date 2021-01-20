@@ -1,11 +1,12 @@
 const path = require('path');
 
 const express = require('express');
+const mongoose = require('mongoose');
 
 const admin = require('./routes/admin');
 const shop = require('./routes/shop');
+const auth = require('./routes/auth');
 const { getNotFound } = require('./controllers/not-found');
-const { mongoConnect } = require('./helpers/database');
 const User = require('./models/user');
 
 const app = express();
@@ -16,9 +17,9 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res, next) => {
-  User.findById('60057580e31c9863edff9a18')
+  User.findById('60080150b9e5c10d021220e3')
     .then(user => {
-      req.user = new User(user.name, user.email, user.cart, user._id);
+      req.user = user;
       next();
     })
     .catch(err => {
@@ -27,12 +28,32 @@ app.use((req, res, next) => {
 })
 
 // routes
+app.use(shop);
+app.use(auth);
 app.use('/admin', admin);
-app.use('/', shop);
 app.use(getNotFound);
 
 
 //start the server
-mongoConnect(() => {
-  app.listen(3001);
-})
+mongoose.connect('mongodb+srv://root:12345@cluster0.pyavk.mongodb.net/shop?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    User.findOne().then(user => {
+      if (!user) {
+        const user = new User({
+          name: "Max",
+          email: "m@m.com",
+          cart: {
+            items: []
+          }
+        })
+        user.save();
+      }
+    })
+
+    app.listen(3001, () => {
+      console.log('Serer run on port 3001');
+    });
+  })
+  .catch(err => {
+    console.log(err);
+  })

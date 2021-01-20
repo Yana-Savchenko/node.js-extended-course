@@ -1,4 +1,5 @@
 const mongodb = require('mongodb');
+const product = require('../models/product');
 
 const Product = require('../models/product');
 
@@ -15,8 +16,15 @@ exports.getAddProduct = (req, res) => {
 exports.postAddProduct = (req, res) => {
   const { title, imageUrl, price, description } = { ...req.body };
   const { user } = { ...req };
-  const product = new Product(title, price, description, imageUrl, null, user._id)
-    .save()
+  const product = new Product({
+    title,
+    price,
+    description,
+    imageUrl,
+    userId: req.user,
+  })
+
+  product.save()
     .then(() => {
       res.redirect('/admin/products');
     })
@@ -52,8 +60,14 @@ exports.getEditProduct = (req, res) => {
 
 exports.postEditProduct = (req, res) => {
   const { productId, title, imageUrl, price, description } = { ...req.body };
-  const product = new Product(title, price, description, imageUrl, new ObjectId(productId));
-  product.save()
+  Product.findById(productId)
+    .then(product => {
+      productId.title = title;
+      product.price = price;
+      product.description = description;
+      product.imageUrl = imageUrl;
+      return product.save();
+    })
     .then(result => {
       res.redirect('/admin/products');
       console.log('Product updated');
@@ -66,7 +80,7 @@ exports.postEditProduct = (req, res) => {
 
 exports.postDeleteProduct = (req, res) => {
   const { productId } = { ...req.body };
-  Product.deleteById(productId)
+  Product.findByIdAndRemove(productId, { useFindAndModify: false })
     .then(() => {
       res.redirect('/admin/products');
     })
@@ -74,7 +88,7 @@ exports.postDeleteProduct = (req, res) => {
 }
 
 exports.getProducts = (req, res) => {
-  Product.fetchAll()
+  Product.find()
     .then(products => {
       res.render('admin/products', {
         prods: products,
