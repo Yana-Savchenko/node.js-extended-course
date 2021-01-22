@@ -1,15 +1,11 @@
-const mongodb = require('mongodb');
-const product = require('../models/product');
-
 const Product = require('../models/product');
-
-const ObjectId = mongodb.ObjectId;
 
 exports.getAddProduct = (req, res) => {
   res.render('admin/edit-product', {
     docTitle: "Add product",
     path: "/admin/add-product",
-    editing: false
+    editing: false,
+    isAuth: req.session.isLoggedIn,
   });
 }
 
@@ -22,6 +18,7 @@ exports.postAddProduct = (req, res) => {
     description,
     imageUrl,
     userId: req.user,
+    isAuth: req.session.isLoggedIn,
   })
 
   product.save()
@@ -50,7 +47,8 @@ exports.getEditProduct = (req, res) => {
         docTitle: "Edit product",
         path: "/admin/edit-product",
         editing: editMode,
-        product
+        product,
+        isAuth: req.session.isLoggedIn,
       });
     })
     .catch(err => {
@@ -70,7 +68,6 @@ exports.postEditProduct = (req, res) => {
     })
     .then(result => {
       res.redirect('/admin/products');
-      console.log('Product updated');
     })
     .catch(err => {
       console.log(err);
@@ -93,7 +90,8 @@ exports.getProducts = (req, res) => {
       res.render('admin/products', {
         prods: products,
         docTitle: "Shop",
-        path: '/admin/products'
+        path: '/admin/products',
+        isAuth: req.session.isLoggedIn,
       });
     })
     .catch(err => {

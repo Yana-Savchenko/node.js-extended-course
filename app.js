@@ -2,6 +2,8 @@ const path = require('path');
 
 const express = require('express');
 const mongoose = require('mongoose');
+const session = require('express-session');
+const MongoDBStore = require('connect-mongodb-session')(session);
 
 const admin = require('./routes/admin');
 const shop = require('./routes/shop');
@@ -9,15 +11,31 @@ const auth = require('./routes/auth');
 const { getNotFound } = require('./controllers/not-found');
 const User = require('./models/user');
 
+MONGODB_URI = 'mongodb+srv://root:12345@cluster0.pyavk.mongodb.net/shop?retryWrites=true&w=majority';
+
 const app = express();
+var store = new MongoDBStore({
+  uri: MONGODB_URI,
+  collection: 'sessions'
+});
 
 app.set('view engine', 'ejs');
 
 app.use(express.urlencoded({ extended: true }))
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(session({
+  secret: 'my secret',
+  resave: false,
+  saveUninitialized: false,
+  store: store
+}));
+
 app.use((req, res, next) => {
-  User.findById('60080150b9e5c10d021220e3')
+  if (!req.session.user) {
+    return next();
+  }
+  User.findById(req.session.user._id)
     .then(user => {
       req.user = user;
       next();
@@ -35,7 +53,7 @@ app.use(getNotFound);
 
 
 //start the server
-mongoose.connect('mongodb+srv://root:12345@cluster0.pyavk.mongodb.net/shop?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     User.findOne().then(user => {
       if (!user) {
