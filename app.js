@@ -4,6 +4,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoDBStore = require('connect-mongodb-session')(session);
+const csrf = require('csurf');
 
 const admin = require('./routes/admin');
 const shop = require('./routes/shop');
@@ -19,6 +20,8 @@ var store = new MongoDBStore({
   collection: 'sessions'
 });
 
+const csrfProtection = csrf();
+
 app.set('view engine', 'ejs');
 
 app.use(express.urlencoded({ extended: true }))
@@ -30,6 +33,8 @@ app.use(session({
   saveUninitialized: false,
   store: store
 }));
+
+app.use(csrfProtection);
 
 app.use((req, res, next) => {
   if (!req.session.user) {
@@ -55,19 +60,6 @@ app.use(getNotFound);
 //start the server
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
-    User.findOne().then(user => {
-      if (!user) {
-        const user = new User({
-          name: "Max",
-          email: "m@m.com",
-          cart: {
-            items: []
-          }
-        })
-        user.save();
-      }
-    })
-
     app.listen(3001, () => {
       console.log('Serer run on port 3001');
     });
