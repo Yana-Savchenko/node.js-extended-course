@@ -50,6 +50,12 @@ app.use((req, res, next) => {
     })
 })
 
+app.use((req, res, next) => {
+  res.locals.isAuth = req.session.isLoggedIn;
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
+
 // routes
 app.use(shop);
 app.use(auth);
