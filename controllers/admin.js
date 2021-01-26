@@ -5,20 +5,17 @@ exports.getAddProduct = (req, res) => {
     docTitle: "Add product",
     path: "/admin/add-product",
     editing: false,
-    isAuth: req.session.isLoggedIn,
   });
 }
 
 exports.postAddProduct = (req, res) => {
   const { title, imageUrl, price, description } = { ...req.body };
-  const { user } = { ...req };
   const product = new Product({
     title,
     price,
     description,
     imageUrl,
     userId: req.user,
-    isAuth: req.session.isLoggedIn,
   })
 
   product.save()
@@ -48,7 +45,6 @@ exports.getEditProduct = (req, res) => {
         path: "/admin/edit-product",
         editing: editMode,
         product,
-        isAuth: req.session.isLoggedIn,
       });
     })
     .catch(err => {
@@ -60,14 +56,20 @@ exports.postEditProduct = (req, res) => {
   const { productId, title, imageUrl, price, description } = { ...req.body };
   Product.findById(productId)
     .then(product => {
-      productId.title = title;
+      if (product.userId.toString() !== req.user._id.toString()) {
+        return res.redirect('/');
+      }
+      product.title = title;
       product.price = price;
       product.description = description;
       product.imageUrl = imageUrl;
-      return product.save();
-    })
-    .then(result => {
-      res.redirect('/admin/products');
+      return product.save()
+        .then(() => {
+          res.redirect('/admin/products');
+        })
+        .catch(err => {
+          console.log(err);
+        })
     })
     .catch(err => {
       console.log(err);
@@ -77,7 +79,7 @@ exports.postEditProduct = (req, res) => {
 
 exports.postDeleteProduct = (req, res) => {
   const { productId } = { ...req.body };
-  Product.findByIdAndRemove(productId, { useFindAndModify: false })
+  Product.deleteOne({ _id: productId, userId: req.user._id })
     .then(() => {
       res.redirect('/admin/products');
     })
@@ -85,13 +87,12 @@ exports.postDeleteProduct = (req, res) => {
 }
 
 exports.getProducts = (req, res) => {
-  Product.find()
+  Product.find({ userId: req.user._id })
     .then(products => {
       res.render('admin/products', {
         prods: products,
         docTitle: "Shop",
         path: '/admin/products',
-        isAuth: req.session.isLoggedIn,
       });
     })
     .catch(err => {
